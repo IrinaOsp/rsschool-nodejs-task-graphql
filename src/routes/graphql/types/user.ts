@@ -1,5 +1,6 @@
 import {
   GraphQLFloat,
+  GraphQLInputObjectType,
   GraphQLList,
   GraphQLNonNull,
   GraphQLObjectType,
@@ -13,6 +14,14 @@ import { PrismaClient } from '@prisma/client';
 export interface UserInput {
   name: string;
   balance: number;
+}
+
+export interface ICreateUser {
+  dto: UserInput;
+}
+
+export interface IChangeUser extends ICreateUser {
+  id: string;
 }
 
 export const userType: GraphQLObjectType = new GraphQLObjectType({
@@ -61,5 +70,21 @@ export const userType: GraphQLObjectType = new GraphQLObjectType({
         });
       },
     },
+  }),
+});
+
+export const CreateUserInputType = new GraphQLInputObjectType({
+  name: 'CreateUserInput',
+  fields: () => ({
+    name: { type: new GraphQLNonNull(GraphQLString) },
+    balance: { type: new GraphQLNonNull(GraphQLFloat) },
+  }),
+});
+
+export const ChangeUserInputType = new GraphQLInputObjectType({
+  name: 'ChangeUserInput',
+  fields: () => ({
+    name: { type: GraphQLString },
+    balance: { type: GraphQLFloat },
   }),
 });

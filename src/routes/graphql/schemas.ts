@@ -1,10 +1,34 @@
 import { Type } from '@fastify/type-provider-typebox';
-import { GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLSchema } from 'graphql';
-import { userType } from './types/user.js';
+import {
+  GraphQLBoolean,
+  GraphQLList,
+  GraphQLNonNull,
+  GraphQLObjectType,
+  GraphQLSchema,
+} from 'graphql';
+import {
+  ChangeUserInputType,
+  CreateUserInputType,
+  IChangeUser,
+  ICreateUser,
+  userType,
+} from './types/user.js';
 import { UUIDType } from './types/uuid.js';
 import { memberType, memberTypeId } from './types/member.js';
-import { postType } from './types/post.js';
-import { profileType } from './types/profile.js';
+import {
+  ChangePostInputType,
+  CreatePostInputType,
+  IChangePost,
+  ICreatePost,
+  postType,
+} from './types/post.js';
+import {
+  ChangeProfileInputType,
+  CreateProfileInputType,
+  IChangeProfile,
+  ICreateProfile,
+  profileType,
+} from './types/profile.js';
 import { PrismaClient } from '@prisma/client';
 
 export const gqlResponseSchema = Type.Partial(
@@ -111,6 +135,157 @@ const mutation = new GraphQLObjectType({
   fields: {
     createPost: {
       type: postType,
+      args: {
+        dto: { type: CreatePostInputType },
+      },
+      resolve: async (_, { dto }: ICreatePost, context: PrismaClient) => {
+        return await context.post.create({
+          data: dto,
+        });
+      },
+    },
+
+    changePost: {
+      type: postType,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: ChangePostInputType },
+      },
+      resolve: async (_, { id, dto }: IChangePost, context: PrismaClient) => {
+        return await context.post.update({
+          where: { id },
+          data: dto,
+        });
+      },
+    },
+
+    deletePost: {
+      type: GraphQLBoolean,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (_, { id }: { id: string }, context: PrismaClient) => {
+        return await context.post
+          .delete({ where: { id } })
+          .then(() => true)
+          .catch(() => false);
+      },
+    },
+
+    createProfile: {
+      type: profileType,
+      args: {
+        dto: { type: CreateProfileInputType },
+      },
+      resolve: async (_, { dto }: ICreateProfile, context: PrismaClient) => {
+        return await context.profile.create({
+          data: dto,
+        });
+      },
+    },
+
+    changeProfile: {
+      type: profileType,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: ChangeProfileInputType },
+      },
+      resolve: async (_, { id, dto }: IChangeProfile, context: PrismaClient) => {
+        return await context.profile.update({
+          where: { id },
+          data: dto,
+        });
+      },
+    },
+
+    deleteProfile: {
+      type: GraphQLBoolean,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (_, { id }: { id: string }, context: PrismaClient) => {
+        return await context.profile
+          .delete({ where: { id } })
+          .then(() => true)
+          .catch(() => false);
+      },
+    },
+
+    createUser: {
+      type: userType,
+      args: {
+        dto: { type: CreateUserInputType },
+      },
+      resolve: async (_, { dto }: ICreateUser, context: PrismaClient) => {
+        return await context.user.create({
+          data: dto,
+        });
+      },
+    },
+
+    changeUser: {
+      type: userType,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: ChangeUserInputType },
+      },
+      resolve: async (_, { id, dto }: IChangeUser, context: PrismaClient) => {
+        return await context.user.update({
+          where: { id },
+          data: dto,
+        });
+      },
+    },
+
+    deleteUser: {
+      type: GraphQLBoolean,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (_, { id }: { id: string }, context: PrismaClient) => {
+        return await context.user
+          .delete({ where: { id } })
+          .then(() => true)
+          .catch(() => false);
+      },
+    },
+
+    subscribeTo: {
+      type: userType,
+      args: {
+        userId: { type: new GraphQLNonNull(UUIDType) },
+        authorId: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (
+        _,
+        { userId, authorId }: { userId: string; authorId: string },
+        context: PrismaClient,
+      ) => {
+        await context.subscribersOnAuthors.create({
+          data: { subscriberId: userId, authorId },
+        });
+
+        return await context.user.findUnique({
+          where: { id: userId },
+        });
+      },
+    },
+
+    unsubscribeFrom: {
+      type: GraphQLBoolean,
+      args: {
+        userId: { type: new GraphQLNonNull(UUIDType) },
+        authorId: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (
+        _,
+        { userId, authorId }: { userId: string; authorId: string },
+        context: PrismaClient,
+      ) => {
+        await context.subscribersOnAuthors.deleteMany({
+          where: { subscriberId: userId, authorId },
+        });
+      },
     },
   },
 });
